@@ -96,7 +96,7 @@
 **  \par Limits
 **       Must be less than or equal to #CFE_SB_HIGHEST_VALID_MSGID and greater than SCH_MDT_MIN_MSG_ID
 */
-#define SCH_MDT_MAX_MSG_ID    CFE_SB_HIGHEST_VALID_MSGID
+#define SCH_MDT_MAX_MSG_ID    CFE_PLATFORM_SB_HIGHEST_VALID_MSGID
 
 
 /**
@@ -108,7 +108,7 @@
 **
 **  \par Limits
 **       Must be at least large enough to hold the smallest possible message header 
-* **     (see #CFE_SB_TLM_HDR_SIZE and #CFE_SB_CMD_HDR_SIZE)
+* **     (see #sizeof(CFE_MSG_TelemetryHeader_t) and #sizeof(CFE_MSG_CommandHeader_t))
 */
 #define SCH_MAX_MSG_WORDS      64   /* max message length (in words) */
 
