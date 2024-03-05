@@ -1227,7 +1227,7 @@ int32 SCH_ValidateMessageData(void *TableData)
             TableResult = EntryResult;
 
             CFE_EVS_SendEvent(SCH_MESSAGE_TBL_ERR_EID, CFE_EVS_EventType_ERROR,
-                              "Message tbl verify err - idx[%d] mid[0x%X] len[%d] buf[%d]",
+                              "Message tbl verify err - idx[%d] mid[0x%X] len[%ld] buf[%d]",
                               (int)TableIndex, CFE_SB_MsgIdToValue(MessageID), MessageLength, (int)BufferIndex);
         }
     }

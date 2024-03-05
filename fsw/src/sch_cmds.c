@@ -774,7 +774,7 @@ int32 SCH_AcquirePointers(void)
 int32 SCH_VerifyCmdLength (CFE_MSG_Message_t * MessagePtr, uint32 ExpectedLength)
 {
     int32               Status = SCH_SUCCESS;
-    uint32              ActualLength = 0;
+    CFE_MSG_Size_t      ActualLength = 0;
     CFE_SB_MsgId_t      MessageID = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t   CommandCode = 0; 
    
@@ -786,7 +786,7 @@ int32 SCH_VerifyCmdLength (CFE_MSG_Message_t * MessagePtr, uint32 ExpectedLength
         CFE_MSG_GetFcnCode(MessagePtr, &CommandCode);   
          
         CFE_EVS_SendEvent(SCH_CMD_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "Cmd Msg with Bad length Rcvd: ID = 0x%04X, CC = %d, Exp Len = %d, Len = %d",
+                          "Cmd Msg with Bad length Rcvd: ID = 0x%04X, CC = %d, Exp Len = %d, Len = %ld",
                           CFE_SB_MsgIdToValue(MessageID), CommandCode, (int)ExpectedLength, ActualLength);
 
         Status = SCH_BAD_MSG_LENGTH_RC;
