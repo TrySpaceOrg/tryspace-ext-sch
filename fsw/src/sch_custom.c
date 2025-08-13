@@ -101,11 +101,11 @@ int32 SCH_CustomLateInit(void)
     if (Status == CFE_SUCCESS)
     {
         /*
-        ** Start the Minor Frame Timer with an extended delay to allow a Major Frame Sync
-        ** to start processing.  If the Major Frame Sync fails to arrive, then we will
-        ** start when this timer expires and synch ourselves to the MET clock.
+        ** Start the Minor Frame Timer as a periodic timer.
+        ** NOTE: We can't use OS_TimerSet from within timer callbacks per OSAL design,
+        ** so we set it up as periodic from the start.
         */
-        Status = OS_TimerSet(SCH_AppData.TimerId, SCH_STARTUP_PERIOD, 0);
+        Status = OS_TimerSet(SCH_AppData.TimerId, SCH_NORMAL_SLOT_PERIOD, SCH_NORMAL_SLOT_PERIOD);
     }
 
     return Status;
@@ -297,11 +297,9 @@ void SCH_MajorFrameCallback(void)
         if (SCH_AppData.IgnoreMajorFrame == false)
         {
             /*
-            ** Stop Minor Frame Timer (which should be waiting for an unusually long
-            ** time to allow the Major Frame source to resynchronize timing) and start
-            ** it again with nominal Minor Frame timing
+            ** NOTE: We can't call OS_TimerSet from timer callback context per OSAL design.
+            ** Timer is already set as periodic, so just proceed with sync logic.
             */
-            OS_TimerSet(SCH_AppData.TimerId, SCH_NORMAL_SLOT_PERIOD, SCH_NORMAL_SLOT_PERIOD);
     
             /*
             ** Increment Major Frame process counter
@@ -370,13 +368,15 @@ void SCH_MinorFrameCallback(uint32 TimerId)
     if (((SCH_AppData.SyncToMET & SCH_PENDING_MAJOR_SYNCH) != 0) &&
         (SCH_AppData.MajorFrameSource == SCH_MAJOR_FS_MINOR_FRAME_TIMER))
     {
-        /* Whether we have found the Major Frame Start or not, wait another slot */
-        OS_TimerSet(SCH_AppData.TimerId, SCH_NORMAL_SLOT_PERIOD, SCH_NORMAL_SLOT_PERIOD);
+        /* NOTE: We can't call OS_TimerSet from timer callback context per OSAL design.
+         * Timer is already set as periodic, so just proceed with sync logic.
+         */
 
         /* Determine if this was the last attempt */
         SCH_AppData.SyncAttemptsLeft--;
 
         CurrentSlot = SCH_GetMETSlotNumber();
+        
         if ((CurrentSlot != 0) && (SCH_AppData.SyncAttemptsLeft > 0))
         {
             return;
@@ -407,10 +407,9 @@ void SCH_MinorFrameCallback(uint32 TimerId)
         ** It means that the Major Frame Callback did not cancel the
         ** "long slot" timer that was started in the last slot
         **
-        ** It also means that we may now need a "short slot"
-        ** timer to make up for the previous long one
+        ** NOTE: We can't call OS_TimerSet from timer callback context per OSAL design.
+        ** Timer is already set as periodic, so just track the rollover.
         */
-        OS_TimerSet(SCH_AppData.TimerId, SCH_SHORT_SLOT_PERIOD, SCH_NORMAL_SLOT_PERIOD);
         
         SCH_AppData.MinorFramesSinceTone = 0;
         
@@ -419,13 +418,11 @@ void SCH_MinorFrameCallback(uint32 TimerId)
 
     /*
     ** Determine the timer delay value for the next slot
+    ** NOTE: We can't modify timer from callback context, so this logic is simplified
     */
     if (SCH_AppData.MinorFramesSinceTone == SCH_TIME_SYNC_SLOT)
     {
-        /*
-        ** Start "long slot" timer (should be stopped by Major Frame Callback)
-        */
-        OS_TimerSet(SCH_AppData.TimerId, SCH_SYNC_SLOT_PERIOD, 0);
+        /* At sync slot - timer continues periodic */
     }
     
     /*
